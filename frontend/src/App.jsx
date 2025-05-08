@@ -18,36 +18,38 @@ function HomePage() {
       // Her seferinde yeni verileri almak için timestamp ekle
       const timestamp = new Date().getTime();
       
-      // Önce backend API'sinden veri çekmeyi dene
-      try {
-        const backendResponse = await fetch(`https://humanas-backend.infinityfreeapp.com/backend/login_prediction_app.php?_t=${timestamp}`, {
-          method: 'GET',
-          cache: 'no-store',
-          mode: 'cors',
-          headers: {
-            'Accept': 'application/json'
-          },
-          timeout: 5000 // 5 saniye timeout
-        });
-        
-        if (backendResponse.ok) {
-          const data = await backendResponse.json();
-          
-          if (data && data.users) {
-            setUsers(data.users);
-            setLastRefresh(new Date().toLocaleTimeString('tr-TR'));
-            console.log("Backend API'den veriler başarıyla alındı");
-            setLoading(false);
-            return;
-          }
-        }
-        // Backend başarısız olursa, yerel JSON dosyasına düşeriz
-        console.log("Backend API'ye erişilemedi, yerel veri kullanılıyor");
-      } catch (backendError) {
-        console.error("Backend erişim hatası:", backendError);
+      // Netlify Functions üzerinden backend verisine erişim
+      const response = await fetch(`/.netlify/functions/api/login_prediction_app.php?_t=${timestamp}`, {
+        cache: 'no-store'
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
       }
       
-      // Backend'e erişilemezse, yerel JSON dosyasını kullan
+      const data = await response.json();
+      
+      if (data && data.users) {
+        setUsers(data.users);
+        setLastRefresh(new Date().toLocaleTimeString('tr-TR'));
+        console.log("Backend verisi Netlify Functions üzerinden başarıyla alındı");
+      } else {
+        console.error("API response doesn't contain users data:", data);
+        // Yerel JSON dosyasını kullan (fallback)
+        await loadLocalData(timestamp);
+      }
+    } catch (error) {
+      console.error('Netlify Functions ile veri çekme hatası:', error);
+      // Yerel JSON dosyasını kullan (fallback)
+      await loadLocalData(timestamp);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Yerel JSON dosyasından veri yükleme (fallback için)
+  const loadLocalData = async (timestamp) => {
+    try {
       const localResponse = await fetch(`/data/api_data.json?_t=${timestamp}`, {
         cache: 'no-store'
       });
@@ -68,14 +70,12 @@ function HomePage() {
         
         setUsers(usersList);
         setLastRefresh(new Date().toLocaleTimeString('tr-TR'));
-        console.log("Yerel JSON'dan veriler alındı");
+        console.log("Yerel JSON'dan veriler alındı (fallback)");
       } else {
         console.error("API response doesn't contain users data:", jsonData);
       }
-    } catch (error) {
-      console.error('Veri çekme hatası:', error);
-    } finally {
-      setLoading(false);
+    } catch (localError) {
+      console.error('Yerel veri yükleme hatası:', localError);
     }
   };
 

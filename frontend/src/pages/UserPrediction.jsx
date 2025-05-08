@@ -62,43 +62,9 @@ const UserPrediction = () => {
     };
   };
 
-  const fetchUserData = async () => {
+  // Yerel JSON dosyasından kullanıcı verisini yükleme (fallback)
+  const loadLocalUserData = async (timestamp) => {
     try {
-      setLoading(true);
-      const timestamp = new Date().getTime();
-      
-      // Önce backend API'sinden veri çekmeyi dene
-      try {
-        const backendResponse = await fetch(`https://humanas-backend.infinityfreeapp.com/backend/login_prediction_app.php?userId=${userId}&_t=${timestamp}`, {
-          method: 'GET',
-          cache: 'no-store',
-          mode: 'cors',
-          headers: {
-            'Accept': 'application/json'
-          },
-          timeout: 5000 // 5 saniye timeout
-        });
-        
-        if (backendResponse.ok) {
-          const data = await backendResponse.json();
-          
-          if (!data.error) {
-            // API yanıtını mevcut bileşenlere uyacak şekilde düzenle
-            setSelectedUser(data.user);
-            setPredictions(data.predictions);
-            setLastRefresh(new Date().toLocaleTimeString());
-            console.log("Backend API'den kullanıcı verileri başarıyla alındı");
-            setLoading(false);
-            return;
-          }
-        }
-        // Backend başarısız olursa, yerel JSON dosyasına düşeriz
-        console.log("Backend API'den kullanıcı verileri alınamadı, yerel veri kullanılıyor");
-      } catch (backendError) {
-        console.error("Backend kullanıcı erişim hatası:", backendError);
-      }
-      
-      // Backend'e erişilemezse, yerel JSON dosyasını kullan
       const localResponse = await fetch(`/data/api_data.json?_t=${timestamp}`, {
         cache: 'no-store'
       });
@@ -129,14 +95,47 @@ const UserPrediction = () => {
         setPredictions(predictionsData);
         
         setLastRefresh(new Date().toLocaleTimeString());
-        console.log("Yerel JSON'dan kullanıcı verileri alındı");
+        console.log("Yerel JSON'dan kullanıcı verileri alındı (fallback)");
       } else {
         setError('Veri formatında hata: Kullanıcı verileri bulunamadı');
       }
+    } catch (localErr) {
+      setError(localErr.message);
+    }
+  };
+
+  const fetchUserData = async () => {
+    try {
+      setLoading(true);
+      const timestamp = new Date().getTime();
       
+      // Netlify Functions üzerinden kullanıcı verisine erişim
+      const response = await fetch(`/.netlify/functions/api/login_prediction_app.php?userId=${userId}&_t=${timestamp}`, {
+        cache: 'no-store'
+      });
+      
+      if (!response.ok) {
+        throw new Error('Kullanıcı verileri alınamadı');
+      }
+      
+      const data = await response.json();
+      
+      if (!data.error) {
+        // API yanıtını mevcut bileşenlere uyacak şekilde düzenle
+        setSelectedUser(data.user);
+        setPredictions(data.predictions);
+        setLastRefresh(new Date().toLocaleTimeString());
+        console.log("Backend'den kullanıcı verileri Netlify Functions üzerinden başarıyla alındı");
+      } else {
+        console.error("Backend API'den kullanıcı verileri alınamadı:", data.error);
+        // Yerel JSON dosyasına düş
+        await loadLocalUserData(timestamp);
+      }
       setLoading(false);
     } catch (err) {
-      setError(err.message);
+      console.error("Netlify Functions ile kullanıcı verileri çekme hatası:", err);
+      // Yerel JSON dosyasına düş
+      await loadLocalUserData(timestamp);
       setLoading(false);
     }
   };
