@@ -62,9 +62,12 @@ const UserPrediction = () => {
     };
   };
 
-  // Yerel JSON dosyasından kullanıcı verisini yükleme (fallback)
-  const loadLocalUserData = async (timestamp) => {
+  const fetchUserData = async () => {
     try {
+      setLoading(true);
+      const timestamp = new Date().getTime();
+      
+      // Doğrudan yerel JSON dosyasından yükle
       const localResponse = await fetch(`/data/api_data.json?_t=${timestamp}`, {
         cache: 'no-store'
       });
@@ -95,47 +98,14 @@ const UserPrediction = () => {
         setPredictions(predictionsData);
         
         setLastRefresh(new Date().toLocaleTimeString());
-        console.log("Yerel JSON'dan kullanıcı verileri alındı (fallback)");
+        console.log("Yerel JSON'dan kullanıcı verileri alındı");
       } else {
         setError('Veri formatında hata: Kullanıcı verileri bulunamadı');
       }
-    } catch (localErr) {
-      setError(localErr.message);
-    }
-  };
-
-  const fetchUserData = async () => {
-    try {
-      setLoading(true);
-      const timestamp = new Date().getTime();
       
-      // Netlify Functions üzerinden kullanıcı verisine erişim
-      const response = await fetch(`/.netlify/functions/api/login_prediction_app.php?userId=${userId}&_t=${timestamp}`, {
-        cache: 'no-store'
-      });
-      
-      if (!response.ok) {
-        throw new Error('Kullanıcı verileri alınamadı');
-      }
-      
-      const data = await response.json();
-      
-      if (!data.error) {
-        // API yanıtını mevcut bileşenlere uyacak şekilde düzenle
-        setSelectedUser(data.user);
-        setPredictions(data.predictions);
-        setLastRefresh(new Date().toLocaleTimeString());
-        console.log("Backend'den kullanıcı verileri Netlify Functions üzerinden başarıyla alındı");
-      } else {
-        console.error("Backend API'den kullanıcı verileri alınamadı:", data.error);
-        // Yerel JSON dosyasına düş
-        await loadLocalUserData(timestamp);
-      }
       setLoading(false);
     } catch (err) {
-      console.error("Netlify Functions ile kullanıcı verileri çekme hatası:", err);
-      // Yerel JSON dosyasına düş
-      await loadLocalUserData(timestamp);
+      setError(err.message);
       setLoading(false);
     }
   };
