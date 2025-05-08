@@ -5,7 +5,6 @@ const Header = ({ onRefresh, lastRefresh }) => {
     <header>
       <div className="header-content">
         <div className="logo-container">
-          <img src="src/assets/favicon.ico" alt="Humanas Logo" className="logo" />
           <h1>Humanas</h1>
         </div>
         <h2 className="subtitle">Kullanıcı Login Tahmin Sistemi</h2>
