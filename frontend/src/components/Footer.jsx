@@ -5,7 +5,7 @@ const Footer = () => {
     <footer>
       <div className="footer-content">
         <div className="footer-logo">
-          <img src="/src/assets/favicon.ico" alt="Humanas Logo" className="logo" />
+          <img src="src/assets/favicon.ico" alt="Humanas Logo" className="logo" />
           <span className="logo-text">Humanas</span>
         </div>
         <div className="footer-links">
