@@ -1,7 +1,7 @@
 # Netlify _redirects file
 
 # Proxy API requests to InfinityFree
-/backend/*  http://your-infinityfree-domain.infinityfreeapp.com/:splat  200
+/backend/*  http://humanas-backend.infinityfreeapp.com/:splat  200
 
 # Handle SPA routing
 /*  /index.html  200 

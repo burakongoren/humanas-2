@@ -6,9 +6,10 @@ ini_set('display_startup_errors', 1);
 
 // Add CORS headers at the start of the file
 // Allow requests from your Netlify domain
-header("Access-Control-Allow-Origin: https://your-netlify-site.netlify.app");
+header("Access-Control-Allow-Origin: https://humanas-case.netlify.app");
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type");
+header("Access-Control-Allow-Headers: Content-Type, Authorization");
+header("Content-Type: application/json; charset=UTF-8");
 
 // For preflight OPTIONS requests
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {

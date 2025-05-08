@@ -5,7 +5,7 @@
 
 [[redirects]]
   from = "/backend/*"
-  to = "http://your-infinityfree-domain.infinityfreeapp.com/:splat"
+  to = "http://humanas-backend.infinityfreeapp.com/:splat"
   status = 200
   force = true
 
