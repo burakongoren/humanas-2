@@ -1,7 +1,7 @@
 [build]
   base = ""
   publish = "frontend/dist"
-  command = "cd frontend && npm ci && npm run build"
+  command = "cd frontend && npm install && npx vite build"
 
 # Production context: all deploys from the Production branch set in your site's 
 # deploy contexts will inherit these settings.
