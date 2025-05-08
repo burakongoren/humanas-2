@@ -1,6 +1,9 @@
 <?php
-// Allow requests from your Netlify domain
-header("Access-Control-Allow-Origin: https://humanas-case.netlify.app");
+// Çıktı tamponlamasını başlat - HTML çıktısı olmadığından emin olmak için 
+ob_start();
+
+// Allow requests from your Netlify domain - Netlify site URL'ini kullan
+header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
 header("Content-Type: application/json; charset=UTF-8");
@@ -11,10 +14,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit();
 }
 
-// Enable error reporting
+// Enable error reporting - Ama çıktıya değil, loglara yaz
 error_reporting(E_ALL);
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
+ini_set('display_errors', 0); // çıktıya hata çıkarmayı devre dışı bırak
+ini_set('display_startup_errors', 0);
+ini_set('log_errors', 1); // hataları loga yaz
 
 // Set the default timezone
 date_default_timezone_set('UTC');

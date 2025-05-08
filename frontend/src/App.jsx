@@ -17,7 +17,9 @@ function HomePage() {
     try {
       // Her seferinde yeni verileri almak için timestamp ekle
       const timestamp = new Date().getTime();
-      const response = await fetch(`/.netlify/functions/api/login_prediction_app.php?_t=${timestamp}`, {
+      
+      // Netlify'da host edilen yerel JSON dosyasını kullan
+      const response = await fetch(`/data/api_data.json?_t=${timestamp}`, {
         cache: 'no-store'
       });
       
@@ -25,13 +27,20 @@ function HomePage() {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
       
-      const data = await response.json();
+      const jsonData = await response.json();
       
-      if (data && data.users) {
-        setUsers(data.users);
+      // JSON formatı backend API'si ile aynı olduğundan, aynı şekilde işleyelim
+      if (jsonData && jsonData.data && jsonData.data.rows) {
+        const usersList = jsonData.data.rows.map(user => ({
+          id: user.id,
+          name: user.name,
+          loginCount: user.logins.length
+        }));
+        
+        setUsers(usersList);
         setLastRefresh(new Date().toLocaleTimeString('tr-TR'));
       } else {
-        console.error("API response doesn't contain users data:", data);
+        console.error("API response doesn't contain users data:", jsonData);
       }
     } catch (error) {
       console.error('Veri çekme hatası:', error);
