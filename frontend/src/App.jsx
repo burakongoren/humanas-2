@@ -18,16 +18,50 @@ function HomePage() {
       // Her seferinde yeni verileri almak için timestamp ekle
       const timestamp = new Date().getTime();
       
-      // Sadece yerel JSON dosyasını kullan (Netlify Functions'ta sorun var)
-      await loadLocalData(timestamp);
+      // Backend API'sini kullan
+      const backendUrl = 'https://humanas-backend.infinityfreeapp.com/backend/fetch-api.php';
+      const response = await fetch(`${backendUrl}?_t=${timestamp}`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+        },
+        cache: 'no-store'
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      
+      const jsonData = await response.json();
+      
+      // JSON formatı backend API'si ile aynı olduğundan, aynı şekilde işleyelim
+      if (jsonData && jsonData.data && jsonData.data.rows) {
+        const usersList = jsonData.data.rows.map(user => ({
+          id: user.id,
+          name: user.name,
+          loginCount: user.logins.length
+        }));
+        
+        setUsers(usersList);
+        setLastRefresh(new Date().toLocaleTimeString('tr-TR'));
+        console.log("Backend API'den veriler alındı");
+      } else {
+        console.error("API response doesn't contain users data:", jsonData);
+        // Backend'den veri alınamazsa, yerel JSON'a geri dön
+        const localTimestamp = new Date().getTime();
+        await loadLocalData(localTimestamp);
+      }
     } catch (error) {
-      console.error('Veri çekme hatası:', error);
+      console.error('Backend veri çekme hatası:', error);
+      // Hata durumunda yerel JSON'a geri dön
+      const localTimestamp = new Date().getTime();
+      await loadLocalData(localTimestamp);
     } finally {
       setLoading(false);
     }
   };
 
-  // Yerel JSON dosyasından veri yükleme
+  // Yerel JSON dosyasından veri yükleme (yedek olarak)
   const loadLocalData = async (timestamp) => {
     try {
       const localResponse = await fetch(`/data/api_data.json?_t=${timestamp}`, {
@@ -50,7 +84,7 @@ function HomePage() {
         
         setUsers(usersList);
         setLastRefresh(new Date().toLocaleTimeString('tr-TR'));
-        console.log("Yerel JSON'dan veriler alındı");
+        console.log("Yerel JSON'dan veriler alındı (yedek)");
       } else {
         console.error("API response doesn't contain users data:", jsonData);
       }

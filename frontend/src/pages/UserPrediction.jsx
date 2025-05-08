@@ -67,7 +67,83 @@ const UserPrediction = () => {
       setLoading(true);
       const timestamp = new Date().getTime();
       
-      // Doğrudan yerel JSON dosyasından yükle
+      // Backend API'sinden login tahminini al
+      const backendUrl = 'https://humanas-backend.infinityfreeapp.com/backend/login_prediction_app.php';
+      const response = await fetch(`${backendUrl}?userId=${userId}&_t=${timestamp}`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+        },
+        cache: 'no-store'
+      });
+      
+      if (!response.ok) {
+        throw new Error('Kullanıcı verileri alınamadı');
+      }
+      
+      const predictionData = await response.json();
+      
+      // Kullanıcı verilerini fetch et
+      const apiUrl = 'https://humanas-backend.infinityfreeapp.com/backend/fetch-api.php';
+      const userResponse = await fetch(`${apiUrl}?_t=${timestamp}`, {
+        cache: 'no-store'
+      });
+      
+      if (!userResponse.ok) {
+        throw new Error('Kullanıcı verileri alınamadı');
+      }
+      
+      const jsonData = await userResponse.json();
+      
+      if (jsonData && jsonData.data && jsonData.data.rows) {
+        // Belirli kullanıcıyı bul
+        const user = jsonData.data.rows.find(u => u.id === userId);
+        
+        if (!user) {
+          throw new Error(`Kullanıcı bulunamadı: ${userId}`);
+        }
+        
+        // Kullanıcı verisini ayarla
+        setSelectedUser({
+          id: user.id,
+          name: user.name,
+          logins: user.logins
+        });
+        
+        // Backend'den gelen tahmin verilerini kullan ya da hesapla
+        if (predictionData && predictionData.predictions) {
+          setPredictions(predictionData.predictions);
+          console.log("Backend'den tahmin verileri alındı");
+        } else {
+          // Tahmin verileri yoksa frontend tarafında oluştur
+          const calculatedPredictions = calculatePredictions(user);
+          setPredictions(calculatedPredictions);
+          console.log("Frontend'de tahmin hesaplandı");
+        }
+        
+        setLastRefresh(new Date().toLocaleTimeString());
+      } else {
+        setError('Veri formatında hata: Kullanıcı verileri bulunamadı');
+        // Yerel JSON'dan veri yüklemeyi dene
+        const localTimestamp = new Date().getTime();
+        await loadLocalData(localTimestamp);
+      }
+      
+      setLoading(false);
+    } catch (err) {
+      setError(err.message);
+      console.error('Backend veri hatası:', err);
+      // Yerel JSON'dan veri yüklemeyi dene
+      const localTimestamp = new Date().getTime();
+      await loadLocalData(localTimestamp);
+      setLoading(false);
+    }
+  };
+  
+  // Yerel JSON dosyasından yedek veri yükleme
+  const loadLocalData = async (timestamp) => {
+    try {
+      console.log("Yerel JSON'dan yedek veri yükleniyor...");
       const localResponse = await fetch(`/data/api_data.json?_t=${timestamp}`, {
         cache: 'no-store'
       });
@@ -98,15 +174,14 @@ const UserPrediction = () => {
         setPredictions(predictionsData);
         
         setLastRefresh(new Date().toLocaleTimeString());
-        console.log("Yerel JSON'dan kullanıcı verileri alındı");
+        console.log("Yerel JSON'dan kullanıcı verileri alındı (yedek)");
+        setError(null);
       } else {
         setError('Veri formatında hata: Kullanıcı verileri bulunamadı');
       }
-      
-      setLoading(false);
-    } catch (err) {
-      setError(err.message);
-      setLoading(false);
+    } catch (localError) {
+      console.error('Yerel veri yükleme hatası:', localError);
+      setError(localError.message);
     }
   };
 
