@@ -20,7 +20,7 @@ const UserPrediction = () => {
     try {
       setLoading(true);
       const timestamp = new Date().getTime();
-      const response = await fetch(`/backend/login_prediction_app.php?userId=${userId}&_t=${timestamp}`, {
+      const response = await fetch(`/.netlify/functions/api/login_prediction_app.php?userId=${userId}&_t=${timestamp}`, {
         cache: 'no-store'
       });
       

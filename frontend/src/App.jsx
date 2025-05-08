@@ -17,7 +17,7 @@ function HomePage() {
     try {
       // Her seferinde yeni verileri almak için timestamp ekle
       const timestamp = new Date().getTime();
-      const response = await fetch(`/backend/login_prediction_app.php?_t=${timestamp}`, {
+      const response = await fetch(`/.netlify/functions/api/login_prediction_app.php?_t=${timestamp}`, {
         cache: 'no-store'
       });
       

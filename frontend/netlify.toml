@@ -3,11 +3,25 @@
   publish = "dist"
   command = "npm run build"
 
+# Production context: all deploys from the Production branch set in your site's 
+# deploy contexts will inherit these settings.
+[context.production.environment]
+  NODE_ENV = "production"
+
+# HTTP/2 Server Push için
+[[headers]]
+  for = "/*"
+    [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "GET, POST, OPTIONS"
+    Access-Control-Allow-Headers = "Content-Type, Authorization"
+
 [[redirects]]
   from = "/backend/*"
   to = "http://humanas-backend.infinityfreeapp.com/backend/:splat"
   status = 200
   force = true
+  headers = {X-From = "Netlify"}
 
 [[redirects]]
   from = "/*"
